@@ -1,0 +1,36 @@
+[package]
+name = "rdms"
+version = "0.1.0"
+edition = "2021"
+description = "企业研发团队内部管理系统（R&D Management System）——课程作业架构框架"
+
+[dependencies]
+# Web 框架：路由、状态管理、JSON 提取/响应
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+
+# 数据库：SQLite（零配置，适合课程作业）+ 异步连接池
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono"] }
+
+# 序列化 / 反序列化（JSON 接口的请求体与响应体）
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 静态文件服务（托管 frontend/ 目录）、CORS、日志
+tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+
+# 时间与 UUID
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# 错误处理
+thiserror = "2"
+anyhow = "1"
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# 说明：
+# 1. 以上依赖版本为参考，实现时可调整到最新稳定版。
+# 2. 前端不依赖任何构建工具，纯 HTML/CSS/JS，由后端静态文件服务托管。

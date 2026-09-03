@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>企业研发团队管理系统</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <!-- 左侧导航栏 -->
+    <aside class="sidebar">
+        <h1 class="logo">R&D 管理系统</h1>
+        <nav>
+            <a href="#/dashboard" data-route>工作台</a>
+            <a href="#/members" data-route>成员管理</a>
+            <a href="#/projects" data-route>项目管理</a>
+            <a href="#/tasks" data-route>任务管理</a>
+            <a href="#/attendance" data-route>工时管理</a>
+            <a href="#/budget" data-route>成本与决策</a>
+        </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="content" id="app">
+        <!-- 由 js/views/*.js 动态渲染 -->
+        <p>加载中...</p>
+    </main>
+
+    <!-- 按依赖顺序加载脚本 -->
+    <script src="js/api.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/views/dashboard.js"></script>
+    <script src="js/views/members.js"></script>
+    <script src="js/views/projects.js"></script>
+    <script src="js/views/tasks.js"></script>
+    <script src="js/views/attendance.js"></script>
+    <script src="js/views/budget.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

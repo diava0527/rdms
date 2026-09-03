@@ -1,0 +1,9 @@
+/target
+**/*.rs.bk
+Cargo.lock
+# SQLite 数据库文件（本地运行生成）
+*.db
+*.db-journal
+*.sqlite
+# 本地环境变量
+.env

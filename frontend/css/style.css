@@ -1,0 +1,107 @@
+/* 全局样式
+ * 归属：成员 C
+ */
+
+:root {
+    --sidebar-width: 220px;
+    --primary: #2f6fed;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 侧边栏 */
+.sidebar {
+    width: var(--sidebar-width);
+    background: #1f2937;
+    color: #fff;
+    padding: 20px 0;
+    flex-shrink: 0;
+}
+
+.logo {
+    font-size: 18px;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar nav a {
+    display: block;
+    padding: 12px 20px;
+    color: #d1d5db;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* 主内容 */
+.content {
+    flex: 1;
+    padding: 24px;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin-bottom: 16px;
+}
+
+/* 表格 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+th {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* 表单与按钮 */
+input, select, textarea {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+}
+
+button {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    opacity: 0.9;
+}
