@@ -5,9 +5,11 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
+use crate::error::ApiError;
+
 /// 成本类型
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CostType {
     /// 人力成本
     Labor,
@@ -17,6 +19,30 @@ pub enum CostType {
     Outsourcing,
     /// 其他
     Other,
+}
+
+impl CostType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CostType::Labor => "labor",
+            CostType::Equipment => "equipment",
+            CostType::Outsourcing => "outsourcing",
+            CostType::Other => "other",
+        }
+    }
+}
+
+impl std::str::FromStr for CostType {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "labor" => Ok(CostType::Labor),
+            "equipment" => Ok(CostType::Equipment),
+            "outsourcing" => Ok(CostType::Outsourcing),
+            "other" => Ok(CostType::Other),
+            other => Err(format!("未知成本类型: {other}")),
+        }
+    }
 }
 
 /// 预算/成本条目实体（对应数据库 budgets 表）
@@ -33,6 +59,31 @@ pub struct Budget {
     pub note: String,
     /// 发生日期
     pub occurred_at: NaiveDateTime,
+}
+
+/// 数据库行 → 实体 的中间结构（枚举列以字符串读取）
+#[derive(sqlx::FromRow)]
+pub(crate) struct RawBudget {
+    id: i64,
+    project_id: i64,
+    cost_type: String,
+    amount: f64,
+    note: String,
+    occurred_at: NaiveDateTime,
+}
+
+impl TryFrom<RawBudget> for Budget {
+    type Error = ApiError;
+    fn try_from(r: RawBudget) -> Result<Self, Self::Error> {
+        Ok(Budget {
+            id: r.id,
+            project_id: r.project_id,
+            cost_type: r.cost_type.parse().map_err(ApiError::Internal)?,
+            amount: r.amount,
+            note: r.note,
+            occurred_at: r.occurred_at,
+        })
+    }
 }
 
 /// 新增成本条目请求体

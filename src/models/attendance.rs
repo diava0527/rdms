@@ -6,7 +6,9 @@ use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 
 /// 工时记录实体（对应数据库 attendance 表）
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// 该实体无枚举字段，可直接用 `#[derive(sqlx::FromRow)]` 映射数据库行。
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Attendance {
     pub id: i64,
     /// 成员 ID
