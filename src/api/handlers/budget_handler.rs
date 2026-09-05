@@ -7,7 +7,7 @@ use axum::Json;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::error::ApiResult;
+use crate::error::{ApiError, ApiResult};
 use crate::models::{Budget, NewBudget};
 use crate::services::budget_service;
 
@@ -20,15 +20,19 @@ pub struct BudgetQuery {
 /// POST /api/budgets
 pub async fn create_budget(
     State(pool): State<SqlitePool>,
-    Json(payload): Json<NewBudget>,
+    payload: Result<Json<NewBudget>, axum::extract::rejection::JsonRejection>,
 ) -> ApiResult<Json<Budget>> {
-    todo!("实现：调用 budget_service::create_budget")
+    let Json(payload) = payload.map_err(ApiError::from)?;
+    Ok(Json(budget_service::create_budget(&pool, payload).await?))
 }
 
 /// GET /api/budgets?project_id=1
 pub async fn list_budget(
     State(pool): State<SqlitePool>,
-    Query(q): Query<BudgetQuery>,
+    q: Result<Query<BudgetQuery>, axum::extract::rejection::QueryRejection>,
 ) -> ApiResult<Json<Vec<Budget>>> {
-    todo!("实现：调用 budget_service::list_budget(pool, q.project_id)")
+    let Query(q) = q.map_err(ApiError::from)?;
+    Ok(Json(
+        budget_service::list_budget(&pool, q.project_id).await?,
+    ))
 }

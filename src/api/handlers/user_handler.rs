@@ -2,49 +2,55 @@
 //!
 //! 归属：成员 B
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path, State};
 use axum::Json;
-use serde::Deserialize;
+
 use sqlx::SqlitePool;
 
-use crate::error::ApiResult;
+use crate::error::{ApiError, ApiResult};
 use crate::models::{NewUser, UpdateUser, User};
 use crate::services::user_service;
 
 /// POST /api/users
 pub async fn create_user(
     State(pool): State<SqlitePool>,
-    Json(payload): Json<NewUser>,
+    payload: Result<Json<NewUser>, axum::extract::rejection::JsonRejection>,
 ) -> ApiResult<Json<User>> {
-    todo!("实现：调用 user_service::create_user")
+    let Json(payload) = payload.map_err(ApiError::from)?;
+    Ok(Json(user_service::create_user(&pool, payload).await?))
 }
 
 /// GET /api/users
 pub async fn list_users(State(pool): State<SqlitePool>) -> ApiResult<Json<Vec<User>>> {
-    todo!("实现：调用 user_service::list_users")
+    Ok(Json(user_service::list_users(&pool).await?))
 }
 
 /// GET /api/users/:id
 pub async fn get_user(
     State(pool): State<SqlitePool>,
-    Path(id): Path<i64>,
+    id: Result<Path<i64>, axum::extract::rejection::PathRejection>,
 ) -> ApiResult<Json<User>> {
-    todo!("实现：调用 user_service::get_user")
+    let Path(id) = id.map_err(ApiError::from)?;
+    Ok(Json(user_service::get_user(&pool, id).await?))
 }
 
 /// PUT /api/users/:id
 pub async fn update_user(
     State(pool): State<SqlitePool>,
-    Path(id): Path<i64>,
-    Json(payload): Json<UpdateUser>,
+    id: Result<Path<i64>, axum::extract::rejection::PathRejection>,
+    payload: Result<Json<UpdateUser>, axum::extract::rejection::JsonRejection>,
 ) -> ApiResult<Json<User>> {
-    todo!("实现：调用 user_service::update_user")
+    let Path(id) = id.map_err(ApiError::from)?;
+    let Json(payload) = payload.map_err(ApiError::from)?;
+    Ok(Json(user_service::update_user(&pool, id, payload).await?))
 }
 
 /// DELETE /api/users/:id
 pub async fn delete_user(
     State(pool): State<SqlitePool>,
-    Path(id): Path<i64>,
-) -> ApiResult<Json<()>> {
-    todo!("实现：调用 user_service::delete_user")
+    id: Result<Path<i64>, axum::extract::rejection::PathRejection>,
+) -> ApiResult<axum::http::StatusCode> {
+    let Path(id) = id.map_err(ApiError::from)?;
+    user_service::delete_user(&pool, id).await?;
+    Ok(axum::http::StatusCode::NO_CONTENT)
 }
