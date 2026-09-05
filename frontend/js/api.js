@@ -1,76 +1,104 @@
-// API 封装：统一封装 fetch 调用，供各视图使用。
-// 归属：成员 C
+// ============================================================
+// API 封装层 —— 统一调用后端 REST 接口
+// ============================================================
 
-const BASE_URL = "/api";
+const BASE_URL = '/api';
 
 /**
  * 通用请求函数
- * @param {string} path  接口路径，如 "/users"
- * @param {object} opts  { method, query, body }
- * @returns {Promise<any>} 解析后的 JSON
  */
-async function request(path, opts = {}) {
-    const { method = "GET", query, body } = opts;
+async function request(endpoint, options = {}) {
+    const url = `${BASE_URL}${endpoint}`;
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        },
+        ...options,
+    };
 
-    // 拼接查询参数
-    let url = BASE_URL + path;
-    if (query) {
-        const qs = new URLSearchParams();
-        Object.entries(query).forEach(([k, v]) => {
-            if (v !== undefined && v !== null) qs.set(k, v);
-        });
-        url += "?" + qs.toString();
+    // 如果有 body，自动 JSON 序列化
+    if (options.body && typeof options.body === 'object') {
+        config.body = JSON.stringify(options.body);
     }
 
-    const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+        const response = await fetch(url, config);
+        const data = await response.json().catch(() => ({}));
 
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `请求失败: ${res.status}`);
+        if (!response.ok) {
+            const errorMsg = data.error || data.message || `HTTP ${response.status}`;
+            throw new Error(errorMsg);
+        }
+
+        return data;
+    } catch (err) {
+        // 网络错误也抛出
+        if (err instanceof Error) {
+            throw err;
+        }
+        throw new Error('网络请求失败');
     }
-
-    return res.status === 204 ? null : res.json();
 }
 
-// —— 各资源的便捷方法（成员 C 实现）——
-const api = {
-    // 成员
-    users: {
-        list: () => request("/users"),
-        create: (body) => request("/users", { method: "POST", body }),
-        get: (id) => request(`/users/${id}`),
-        update: (id, body) => request(`/users/${id}`, { method: "PUT", body }),
-        remove: (id) => request(`/users/${id}`, { method: "DELETE" }),
-    },
-    // 项目
-    projects: {
-        list: () => request("/projects"),
-        create: (body) => request("/projects", { method: "POST", body }),
-        update: (id, body) => request(`/projects/${id}`, { method: "PUT", body }),
-        remove: (id) => request(`/projects/${id}`, { method: "DELETE" }),
-        costSummary: (id) => request(`/projects/${id}/cost-summary`),
-    },
-    // 任务
-    tasks: {
-        list: (projectId) => request("/tasks", { query: { project_id: projectId } }),
-        create: (body) => request("/tasks", { method: "POST", body }),
-        update: (id, body) => request(`/tasks/${id}`, { method: "PUT", body }),
-        remove: (id) => request(`/tasks/${id}`, { method: "DELETE" }),
-    },
-    // 工时
-    attendance: {
-        list: (query) => request("/attendance", { query }),
-        create: (body) => request("/attendance", { method: "POST", body }),
-    },
-    // 预算/成本
-    budgets: {
-        list: (projectId) => request("/budgets", { query: { project_id: projectId } }),
-        create: (body) => request("/budgets", { method: "POST", body }),
-    },
+// ============================================================
+// 成员 API
+// ============================================================
+export const userApi = {
+    list: () => request('/users'),
+    get: (id) => request(`/users/${id}`),
+    create: (data) => request('/users', { method: 'POST', body: data }),
+    update: (id, data) => request(`/users/${id}`, { method: 'PUT', body: data }),
+    delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
 };
 
-// TODO(成员 C)：如使用 ES 模块，可改为 `export default api;`
+// ============================================================
+// 项目 API
+// ============================================================
+export const projectApi = {
+    list: () => request('/projects'),
+    get: (id) => request(`/projects/${id}`),
+    create: (data) => request('/projects', { method: 'POST', body: data }),
+    update: (id, data) => request(`/projects/${id}`, { method: 'PUT', body: data }),
+    delete: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
+    costSummary: (id) => request(`/projects/${id}/cost-summary`),
+};
+
+// ============================================================
+// 任务 API
+// ============================================================
+export const taskApi = {
+    list: (projectId) => {
+        const query = projectId ? `?project_id=${projectId}` : '';
+        return request(`/tasks${query}`);
+    },
+    get: (id) => request(`/tasks/${id}`),
+    create: (data) => request('/tasks', { method: 'POST', body: data }),
+    update: (id, data) => request(`/tasks/${id}`, { method: 'PUT', body: data }),
+    delete: (id) => request(`/tasks/${id}`, { method: 'DELETE' }),
+};
+
+// ============================================================
+// 工时 API
+// ============================================================
+export const attendanceApi = {
+    list: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return request(`/attendance${query ? '?' + query : ''}`);
+    },
+    create: (data) => request('/attendance', { method: 'POST', body: data }),
+    update: (id, data) => request(`/attendance/${id}`, { method: 'PUT', body: data }),
+    delete: (id) => request(`/attendance/${id}`, { method: 'DELETE' }),
+};
+
+// ============================================================
+// 预算/成本 API
+// ============================================================
+export const budgetApi = {
+    list: (projectId) => {
+        const query = projectId ? `?project_id=${projectId}` : '';
+        return request(`/budgets${query}`);
+    },
+    create: (data) => request('/budgets', { method: 'POST', body: data }),
+    delete: (id) => request(`/budgets/${id}`, { method: 'DELETE' }),
+};
