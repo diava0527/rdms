@@ -19,6 +19,9 @@ pub enum ApiError {
     #[error("数据库错误: {0}")]
     Database(#[from] sqlx::Error),
 
+    #[error("序列化错误: {0}")]
+    Serde(#[from] serde_json::Error),
+
     #[error("内部错误: {0}")]
     Internal(String),
 
@@ -32,6 +35,9 @@ impl IntoResponse for ApiError {
         let (status, msg) = match &self {
             ApiError::NotFound(_) => (StatusCode::NOT_FOUND, self.to_string()),
             ApiError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
+            ApiError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+            ApiError::Serde(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+            ApiError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             ApiError::Database(sqlx::Error::RowNotFound) => {
                 (StatusCode::NOT_FOUND, "资源不存在".to_string())
             }
