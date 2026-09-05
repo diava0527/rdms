@@ -7,7 +7,7 @@ use axum::Json;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::error::ApiResult;
+use crate::error::{ApiError, ApiResult};
 use crate::models::{Attendance, NewAttendance};
 use crate::services::attendance_service;
 
@@ -21,15 +21,21 @@ pub struct AttendanceQuery {
 /// POST /api/attendance
 pub async fn create_attendance(
     State(pool): State<SqlitePool>,
-    Json(payload): Json<NewAttendance>,
+    payload: Result<Json<NewAttendance>, axum::extract::rejection::JsonRejection>,
 ) -> ApiResult<Json<Attendance>> {
-    todo!("实现：调用 attendance_service::create_attendance")
+    let Json(payload) = payload.map_err(ApiError::from)?;
+    Ok(Json(
+        attendance_service::create_attendance(&pool, payload).await?,
+    ))
 }
 
 /// GET /api/attendance?user_id=1&task_id=2
 pub async fn list_attendance(
     State(pool): State<SqlitePool>,
-    Query(q): Query<AttendanceQuery>,
+    q: Result<Query<AttendanceQuery>, axum::extract::rejection::QueryRejection>,
 ) -> ApiResult<Json<Vec<Attendance>>> {
-    todo!("实现：调用 attendance_service::list_attendance(pool, q.user_id, q.task_id)")
+    let Query(q) = q.map_err(ApiError::from)?;
+    Ok(Json(
+        attendance_service::list_attendance(&pool, q.user_id, q.task_id).await?,
+    ))
 }
