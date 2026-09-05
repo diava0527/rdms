@@ -7,7 +7,7 @@ use axum::Json;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::error::ApiResult;
+use crate::error::{ApiError, ApiResult};
 use crate::models::{NewTask, Task, UpdateTask};
 use crate::services::task_service;
 
@@ -20,40 +20,47 @@ pub struct TaskQuery {
 /// POST /api/tasks
 pub async fn create_task(
     State(pool): State<SqlitePool>,
-    Json(payload): Json<NewTask>,
+    payload: Result<Json<NewTask>, axum::extract::rejection::JsonRejection>,
 ) -> ApiResult<Json<Task>> {
-    todo!("实现：调用 task_service::create_task")
+    let Json(payload) = payload.map_err(ApiError::from)?;
+    Ok(Json(task_service::create_task(&pool, payload).await?))
 }
 
 /// GET /api/tasks?project_id=1
 pub async fn list_tasks(
     State(pool): State<SqlitePool>,
-    Query(q): Query<TaskQuery>,
+    q: Result<Query<TaskQuery>, axum::extract::rejection::QueryRejection>,
 ) -> ApiResult<Json<Vec<Task>>> {
-    todo!("实现：调用 task_service::list_tasks(pool, q.project_id)")
+    let Query(q) = q.map_err(ApiError::from)?;
+    Ok(Json(task_service::list_tasks(&pool, q.project_id).await?))
 }
 
 /// GET /api/tasks/:id
 pub async fn get_task(
     State(pool): State<SqlitePool>,
-    Path(id): Path<i64>,
+    id: Result<Path<i64>, axum::extract::rejection::PathRejection>,
 ) -> ApiResult<Json<Task>> {
-    todo!("实现：调用 task_service::get_task")
+    let Path(id) = id.map_err(ApiError::from)?;
+    Ok(Json(task_service::get_task(&pool, id).await?))
 }
 
 /// PUT /api/tasks/:id
 pub async fn update_task(
     State(pool): State<SqlitePool>,
-    Path(id): Path<i64>,
-    Json(payload): Json<UpdateTask>,
+    id: Result<Path<i64>, axum::extract::rejection::PathRejection>,
+    payload: Result<Json<UpdateTask>, axum::extract::rejection::JsonRejection>,
 ) -> ApiResult<Json<Task>> {
-    todo!("实现：调用 task_service::update_task")
+    let Path(id) = id.map_err(ApiError::from)?;
+    let Json(payload) = payload.map_err(ApiError::from)?;
+    Ok(Json(task_service::update_task(&pool, id, payload).await?))
 }
 
 /// DELETE /api/tasks/:id
 pub async fn delete_task(
     State(pool): State<SqlitePool>,
-    Path(id): Path<i64>,
-) -> ApiResult<Json<()>> {
-    todo!("实现：调用 task_service::delete_task")
+    id: Result<Path<i64>, axum::extract::rejection::PathRejection>,
+) -> ApiResult<axum::http::StatusCode> {
+    let Path(id) = id.map_err(ApiError::from)?;
+    task_service::delete_task(&pool, id).await?;
+    Ok(axum::http::StatusCode::NO_CONTENT)
 }

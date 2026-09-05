@@ -19,6 +19,6 @@ pub fn trace_layer(
     TraceLayer::new_for_http()
 }
 
-// TODO(成员 B)：实现真正的鉴权中间件，例如：
+// 当前课程版本按约定无需登录。后续如增加登录，可实现：
 // pub async fn require_auth(req: Request, next: Next) -> Result<Response, ApiError> { ... }
 // 然后在 router 中 `.layer(from_fn(require_auth))`。

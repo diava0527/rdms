@@ -11,22 +11,26 @@
 //!   （projects / tasks / attendance / budgets 同理）
 //!   GET    /api/projects/:id/cost-summary  成本核算（经济决策）
 //!   GET    /                    返回前端 index.html
-//!   /static/*                  前端静态资源
+//!   /css/*、/js/*               前端静态资源
 
-use axum::routing::{get, post, put, delete};
+use axum::routing::get;
 use axum::Router;
 use sqlx::SqlitePool;
 use tower_http::services::ServeDir;
 
-use crate::config::Config;
 use crate::api::handlers;
 use crate::api::middleware;
+use crate::config::Config;
+use crate::error::ApiError;
 
 /// 构建应用路由
 pub fn create_router(pool: SqlitePool, config: &Config) -> Router {
     // REST 接口
     let api = Router::new()
-        .route("/users", get(handlers::list_users).post(handlers::create_user))
+        .route(
+            "/users",
+            get(handlers::list_users).post(handlers::create_user),
+        )
         .route(
             "/users/:id",
             get(handlers::get_user)
@@ -43,11 +47,11 @@ pub fn create_router(pool: SqlitePool, config: &Config) -> Router {
                 .put(handlers::update_project)
                 .delete(handlers::delete_project),
         )
+        .route("/projects/:id/cost-summary", get(handlers::cost_summary))
         .route(
-            "/projects/:id/cost-summary",
-            get(handlers::cost_summary),
+            "/tasks",
+            get(handlers::list_tasks).post(handlers::create_task),
         )
-        .route("/tasks", get(handlers::list_tasks).post(handlers::create_task))
         .route(
             "/tasks/:id",
             get(handlers::get_task)
@@ -61,12 +65,19 @@ pub fn create_router(pool: SqlitePool, config: &Config) -> Router {
         .route(
             "/budgets",
             get(handlers::list_budget).post(handlers::create_budget),
-        );
+        )
+        .fallback(|| async { ApiError::NotFound("接口不存在".into()) })
+        .method_not_allowed_fallback(|| async {
+            ApiError::Request {
+                status: axum::http::StatusCode::METHOD_NOT_ALLOWED,
+                message: "该接口不支持此 HTTP 方法".into(),
+            }
+        });
 
     Router::new()
         .nest("/api", api)
         // 静态文件服务：托管 frontend/ 目录
-        .nest_service("/", ServeDir::new(&config.static_dir))
+        .fallback_service(ServeDir::new(&config.static_dir))
         // 应用状态 + 中间件（鉴权、日志）
         .with_state(pool)
         .layer(middleware::cors_layer())

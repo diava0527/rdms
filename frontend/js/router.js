@@ -1,41 +1,75 @@
-// 前端路由：基于 hash 的简单路由（#/members -> members 视图）。
-// 归属：成员 C
+import { renderDashboard } from './views/dashboard.js';
+import { renderMembers } from './views/members.js';
+import { renderProjects } from './views/projects.js';
+import { renderTasks } from './views/tasks.js';
+import { renderAttendance } from './views/attendance.js';
+import { renderBudget } from './views/budget.js';
 
+/**
+ * 路由表：hash → 渲染函数
+ */
 const routes = {
-    "": "dashboard",
-    "dashboard": "dashboard",
-    "members": "members",
-    "projects": "projects",
-    "tasks": "tasks",
-    "attendance": "attendance",
-    "budget": "budget",
+    dashboard: renderDashboard,
+    members: renderMembers,
+    projects: renderProjects,
+    tasks: renderTasks,
+    attendance: renderAttendance,
+    budget: renderBudget,
 };
 
 /**
- * 渲染当前路由对应的视图
+ * 获取当前路由名称
  */
-function renderRoute() {
-    const hash = location.hash.replace(/^#\//, "");
-    const viewName = routes[hash] || "dashboard";
-    const container = document.getElementById("app");
+function getCurrentRoute() {
+    const hash = window.location.hash.slice(1);
+    return hash || 'dashboard';
+}
 
-    // 更新侧边栏高亮
-    document.querySelectorAll(".sidebar nav a").forEach((a) => {
-        a.classList.toggle("active", a.getAttribute("href") === `#/${hash}`);
+/**
+ * 导航到指定路由
+ */
+export function navigate(route) {
+    if (route && route !== getCurrentRoute()) {
+        window.location.hash = route;
+        return;
+    }
+    renderCurrent();
+}
+
+/**
+ * 渲染当前路由对应的页面
+ */
+export function renderCurrent() {
+    const route = getCurrentRoute();
+    const renderFn = routes[route];
+
+    // 高亮导航
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${route}`);
     });
 
-    // 调用对应视图的渲染函数（约定：views/<name>.js 暴露 render<Name>）
-    // TODO(成员 C)：实现各视图渲染函数
-    const render = window[`render${capitalize(viewName)}`];
-    if (typeof render === "function") {
-        render(container);
+    if (renderFn) {
+        renderFn().catch(err => {
+            console.error('渲染失败:', err);
+            document.getElementById('app').innerHTML = `
+                <div class="card" style="color:#ef4444; text-align:center; padding:2rem;">
+                    <h3>⚠️ 加载失败</h3>
+                    <p class="text-muted">${err.message}</p>
+                </div>
+            `;
+        });
     } else {
-        container.innerHTML = `<p>视图 ${viewName} 未实现</p>`;
+        document.getElementById('app').innerHTML = `
+            <div class="card" style="text-align:center; padding:2rem;">
+                <h3>404</h3>
+                <p class="text-muted">页面不存在</p>
+            </div>
+        `;
     }
 }
 
-function capitalize(s) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
-}
+// 监听 hash 变化
+window.addEventListener('hashchange', renderCurrent);
 
-window.addEventListener("hashchange", renderRoute);
+// 首次加载时渲染
+document.addEventListener('DOMContentLoaded', renderCurrent);
